@@ -1,0 +1,239 @@
+
+class HillClimbing8Puzzle:
+    def __init__(self, start, goal):
+        self.start = start
+        self.goal = goal
+    
+    def find_blank(self, state):
+        for i in range(3):
+            for j in range(3):
+                if state[i][j] == 0:
+                    return i, j
+    
+    def get_neighbors(self, state):
+        neighbors = []
+        row, col = self.find_blank(state)
+        moves = [
+            (-1, 0, "UP"),
+            (1, 0, "DOWN"),
+            (0, -1, "LEFT"),
+            (0, 1, "RIGHT")
+        ]
+        
+        for dr, dc, direction in moves:
+            new_row, new_col = row + dr, col + dc
+            
+            if 0 <= new_row < 3 and 0 <= new_col < 3:
+                # Create new state by swapping
+                new_state = [row[:] for row in state]
+                new_state[row][col], new_state[new_row][new_col] = \
+                    new_state[new_row][new_col], new_state[row][col]
+                neighbors.append((new_state, direction))
+        return neighbors
+    
+    def manhattan_distance(self, state):
+        distance = 0
+        for i in range(3):
+            for j in range(3):
+                tile = state[i][j]
+                if tile != 0:
+                    # Find where this tile should be in goal
+                    for gi in range(3):
+                        for gj in range(3):
+                            if self.goal[gi][gj] == tile:
+                                distance += abs(i - gi) + abs(j - gj)
+        return distance
+    
+    def misplaced_tiles(self, state):
+        count = 0
+        for i in range(3):
+            for j in range(3):
+                if state[i][j] != 0 and state[i][j] != self.goal[i][j]:
+                    count += 1
+        return count
+    
+    def combined_heuristic(self, state):
+        return self.manhattan_distance(state) + self.misplaced_tiles(state)
+    
+    def is_goal(self, state):
+        return state == self.goal
+    
+    def solve(self, heuristic_name="manhattan", max_iterations=1000):
+        if heuristic_name == "manhattan":
+            heuristic = self.manhattan_distance
+        elif heuristic_name == "misplaced":
+            heuristic = self.misplaced_tiles
+        else:
+            heuristic = self.combined_heuristic
+        
+        print(f"Solving using Steepest Ascent Hill Climbing")
+        print(f"Heuristic: {heuristic_name}")
+        print("="*50)
+        
+        current_state = self.start
+        path = [current_state]
+        moves = []
+        
+        for iteration in range(max_iterations):
+            
+            # Check if goal reached
+            if self.is_goal(current_state):
+                print(f"\nGoal reached in {iteration} steps!")
+                return path, moves
+            
+            # Get current heuristic value
+            current_h = heuristic(current_state)
+            
+            print(f"\nIteration {iteration + 1}:")
+            print(f"Current heuristic value: {current_h}")
+            
+            # Get all neighbors
+            neighbors = self.get_neighbors(current_state)
+            
+            # Find the best neighbor (steepest ascent = lowest heuristic)
+            best_neighbor = None
+            best_h = current_h
+            best_move = None
+            
+            for neighbor, direction in neighbors:
+                neighbor_h = heuristic(neighbor)
+                
+                if neighbor_h < best_h:
+                    best_h = neighbor_h
+                    best_neighbor = neighbor
+                    best_move = direction
+            
+            # Check if we found a better state
+            if best_neighbor is None:
+                print(f"\nStuck at local maximum!")
+                print(f"No neighbor better than current state")
+                print(f"Current heuristic: {current_h}")
+                print("\nCurrent state:")
+                self.print_state(current_state)
+                return None, None
+            
+            # Move to best neighbor
+            print(f"Moving {best_move} (new heuristic: {best_h})")
+            current_state = best_neighbor
+            path.append(current_state)
+            moves.append(best_move)
+        
+        print(f"\nMax iterations ({max_iterations}) reached!")
+        return None, None
+    
+    def print_state(self, state):
+        for row in state:
+            print(" ".join(str(tile) if tile != 0 else "_" for tile in row))
+        print()
+    
+    def print_solution(self, path, moves):
+        if not path:
+            print("No solution found")
+            return
+        print("SOLUTION PATH")
+        print("\nStep 0: Initial State")
+        self.print_state(path[0])
+        
+        for i, (state, move) in enumerate(zip(path[1:], moves), 1):
+            print(f"Step {i}: Move {move}")
+            self.print_state(state)
+        print("Goal reached!")
+
+def compare_heuristics(start, goal):
+    print("COMPARING DIFFERENT HEURISTICS")
+    heuristics = ["manhattan", "misplaced", "combined"]
+    for heuristic in heuristics:
+        print("\n" + "-"*70)
+        solver = HillClimbing8Puzzle(start, goal)
+        path, moves = solver.solve(heuristic_name=heuristic, max_iterations=100)
+        
+        if path:
+            print(f"\nSuccess with {heuristic} heuristic!")
+            print(f"Solution length: {len(moves)} moves")
+        else:
+            print(f"\nFailed with {heuristic} heuristic")
+
+def demonstrate_heuristics(state, goal):
+    print("HEURISTIC FUNCTION DEMONSTRATION")
+    solver = HillClimbing8Puzzle(state, goal)
+    
+    print("\nCurrent State:")
+    solver.print_state(state)
+    
+    print("Goal State:")
+    solver.print_state(goal)
+    
+    print("Heuristic Values:")
+    print(f"Manhattan Distance: {solver.manhattan_distance(state)}")
+    print(f"Misplaced Tiles: {solver.misplaced_tiles(state)}")
+    print(f"Combined Heuristic: {solver.combined_heuristic(state)}")
+    print("\nExplanation:")
+    # Manhattan distance breakdown
+    print("\nManhattan Distance Calculation:")
+    total = 0
+    for i in range(3):
+        for j in range(3):
+            tile = state[i][j]
+            if tile != 0:
+                for gi in range(3):
+                    for gj in range(3):
+                        if goal[gi][gj] == tile:
+                            dist = abs(i - gi) + abs(j - gj)
+                            if dist > 0:
+                                print(f"  Tile {tile}: at ({i},{j}), goal ({gi},{gj}), distance = {dist}")
+                            total += dist
+    print(f"  Total Manhattan Distance: {total}")
+    
+    # Misplaced tiles breakdown
+    print("\nMisplaced Tiles Calculation:")
+    count = 0
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] != 0 and state[i][j] != goal[i][j]:
+                print(f"  Tile {state[i][j]}: at ({i},{j}), should be at different position")
+                count += 1
+    print(f"  Total Misplaced: {count}")
+
+
+if __name__ == "__main__":
+    print("STEEPEST ASCENT HILL CLIMBING FOR 8-PUZZLE")
+    # Easy puzzle (solvable with hill climbing)
+    start_easy = [
+        [1, 2, 3],
+        [4, 0, 5],
+        [7, 8, 6]
+    ]
+    start_medium = [
+        [1, 2, 3],
+        [4, 5, 6],
+        [0, 7, 8]
+    ]
+    start_hard = [
+        [1, 2, 3],
+        [0, 4, 5],
+        [7, 8, 6]
+    ]
+    goal = [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 0]
+    ]
+    print("# EXAMPLE 1: Easy Puzzle")
+    print("\nInitial State:")
+    solver = HillClimbing8Puzzle(start_easy, goal)
+    solver.print_state(start_easy)
+    print("Goal State:")
+    solver.print_state(goal)
+    path, moves = solver.solve(heuristic_name="manhattan", max_iterations=100)
+    if path:
+        solver.print_solution(path, moves)
+    
+    print("# EXAMPLE 2: Heuristic Demonstration")
+    demonstrate_heuristics(start_easy, goal)
+    
+    print("# EXAMPLE 3: Compare Heuristics on Medium Puzzle")
+    compare_heuristics(start_medium, goal)
+    
+    print("# EXAMPLE 4: Demonstration of Local Maximum Problem")
+    solver_hard = HillClimbing8Puzzle(start_hard, goal)
+    path, moves = solver_hard.solve(heuristic_name="manhattan", max_iterations=50)

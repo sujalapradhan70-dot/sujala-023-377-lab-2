@@ -1,0 +1,146 @@
+import random
+class ModelBasedVacuumAgent:
+    def __init__(self, room_size=(10, 10)):
+        self.room_size = room_size
+        rows, cols = room_size
+        # Actual environment (unknown to agent initially)
+        self.grid = [[random.randint(0, 1) for _ in range(cols)] for _ in range(rows)]
+        # Agent's internal model (knowledge of the world)
+        self.model = [[None for _ in range(cols)] for _ in range(rows)]  # None = unvisited
+        # Agent state
+        self.current_position = (random.randrange(rows), random.randrange(cols))
+        self.visited_cells = set()
+        # Statistics
+        self.cells_cleaned = 0
+        self.total_moves = 0
+
+    def display_room(self):
+        print("Actual Room:")
+        for row in self.grid:
+            print(' '.join(map(str, row)))
+        print()
+
+    def display_model(self):
+        print("Agent's Model (Knowledge):")
+        rows, cols = self.room_size
+        for i in range(rows):
+            row_str = ""
+            for j in range(cols):
+                if self.model[i][j] is None:
+                    row_str += "? "  # Unknown
+                else:
+                    row_str += f"{self.model[i][j]} "
+            print(row_str)
+        print()
+
+    def perceive(self):
+        x, y = self.current_position
+        status = self.grid[x][y]
+        
+        self.model[x][y] = status
+        self.visited_cells.add((x, y))
+        return status
+
+    def act(self):
+        x, y = self.current_position
+        if self.grid[x][y] == 1:
+            print(f"Cell ({x},{y}) is Dirty. Cleaning")
+            self.grid[x][y] = 0
+            self.model[x][y] = 0  # Update model
+            self.cells_cleaned += 1
+            print(f"Cell ({x},{y}) is now Clean")
+            return True
+        else:
+            print(f"Cell ({x},{y}) is Clean")
+            return False
+
+    def get_valid_moves(self):
+        x, y = self.current_position
+        rows, cols = self.room_size
+        moves = []
+        if x > 0: moves.append((x-1, y))  # Up
+        if x < rows-1: moves.append((x+1, y))  # Down
+        if y > 0: moves.append((x, y-1))  # Left
+        if y < cols-1: moves.append((x, y+1))  # Right
+        return moves
+
+    def choose_next_move(self):
+        valid_moves = self.get_valid_moves()
+        # Priority 1: Unvisited cells (exploration)
+        unvisited = [move for move in valid_moves if move not in self.visited_cells]
+        if unvisited:
+            print(f"Strategy: Exploring unvisited cell")
+            return random.choice(unvisited)
+        # Priority 2: Known dirty cells
+        dirty_cells = [move for move in valid_moves 
+                       if move in self.visited_cells and self.model[move[0]][move[1]] == 1]
+        if dirty_cells:
+            print(f"Strategy: Returning to known dirty cell")
+            return dirty_cells[0]
+        # Priority 3: Any adjacent cell (already explored, but keep moving)
+        print(f"Strategy: Moving to clean visited cell")
+        return random.choice(valid_moves)
+
+    def move(self):
+        next_position = self.choose_next_move()
+        self.current_position = next_position
+        self.total_moves += 1
+        print(f"Moving to ({next_position[0]}, {next_position[1]})")
+
+    def is_room_clean(self):
+        return all(self.grid[i][j] == 0 
+                   for i in range(self.room_size[0]) 
+                   for j in range(self.room_size[1]))
+
+    def has_explored_all(self):
+        rows, cols = self.room_size
+        return len(self.visited_cells) == rows * cols
+
+    def run(self, max_steps=200):
+        print("MODEL-BASED VACUUM CLEANER AGENT")
+        print("\nInitial Room Status:")
+        self.display_room()
+        print(f"Starting at position: {self.current_position}\n")
+        
+        for step in range(1, max_steps + 1):
+            print(f"--- Step {step} ---")
+            # Perceive and update model
+            status = self.perceive()
+            # Act based on perception
+            cleaned = self.act()
+            
+            if self.is_room_clean():
+                print("All cells are clean!")
+                break
+            if self.has_explored_all():
+                print("Explored all cells!")
+                # If there are still dirty cells, revisit them
+                if not self.is_room_clean():
+                    print("Some cells still dirty, continuing...")
+                else:
+                    break
+            # Move to next cell using model-based strategy
+            self.move()
+            if step % 20 == 0:
+                print("\nCurrent Progress:")
+                self.display_room()
+                self.display_model()
+                print(f"Visited: {len(self.visited_cells)}/{self.room_size[0]*self.room_size[1]} cells")
+                print(f"Cleaned: {self.cells_cleaned} cells")
+
+        print("FINAL REPORT")
+        print(f"Total Steps: {step}")
+        print(f"Total Moves: {self.total_moves}")
+        print(f"Cells Cleaned: {self.cells_cleaned}")
+        print(f"Cells Visited: {len(self.visited_cells)}/{self.room_size[0]*self.room_size[1]}")
+        print(f"Efficiency: {(self.cells_cleaned/step)*100:.1f}% (cleaned per step)")
+        print(f"Coverage: {(len(self.visited_cells)/(self.room_size[0]*self.room_size[1]))*100:.1f}%")
+        
+        print("Final Room Status:")
+        self.display_room()
+        print("Agent's Final Knowledge:")
+        self.display_model()
+
+print("COMPARISON: Simple Reflex vs Model-Based Agent\n")
+agent = ModelBasedVacuumAgent(room_size=(10, 10))
+agent.run(max_steps=200)

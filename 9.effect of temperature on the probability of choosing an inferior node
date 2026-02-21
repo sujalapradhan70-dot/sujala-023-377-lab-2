@@ -1,0 +1,148 @@
+import math
+import random
+
+def acceptance_probability(current_cost, next_cost, temperature):
+    if next_cost < current_cost:
+        return 1.0  # Always accept better solution
+    if temperature == 0:
+        return 0.0  # Never accept worse solution at T=0
+    delta = next_cost - current_cost
+    return math.exp(-delta / temperature)
+
+def demo1_basic_temperature_effect():
+    print("DEMO 1: Temperature Effect on Accepting Worse Moves")
+    current = 10
+    next_worse = 15
+    delta = next_worse - current
+    
+    print(f"\nCurrent cost: {current}")
+    print(f"Next cost: {next_worse} (worse by {delta})")
+    print(f"{'Temperature':<15} {'Probability':<15} {'Percentage'}")
+    temps = [100, 50, 20, 10, 5, 2, 1, 0.5, 0.1]
+    
+    for temp in temps:
+        prob = acceptance_probability(current, next_worse, temp)
+        print(f"{temp:<15} {prob:<15.4f} {prob*100:.2f}%")
+    
+    print("\nConclusion:")
+    print("  High temp -> Accept worse moves (explore)")
+    print("  Low temp  -> Reject worse moves (exploit)")
+
+
+def demo2_cooling_schedule():
+    print("DEMO 2: Cooling Schedules")
+    initial_temp = 100
+    iterations = 15
+    schedules = {
+        "Fast (0.80)": 0.80,
+        "Medium (0.90)": 0.90,
+        "Slow (0.95)": 0.95
+    }
+    print(f"\nStarting temperature: {initial_temp}")
+    print(f"Iterations: {iterations}\n")
+    
+    for name, rate in schedules.items():
+        print(f"{name}:")
+        temp = initial_temp
+        
+        for i in [0, 5, 10, 14]:
+            for _ in range(i):
+                temp = initial_temp * (rate ** (i))
+            print(f"  Iteration {i}: T = {temp:.2f}")
+        print()
+    print("Conclusion:")
+    print("  Fast cooling -> Quick convergence, may miss optimum")
+    print("  Slow cooling -> Better exploration, takes longer")
+
+
+def demo3_simulation():
+    print("DEMO 3: Simulation (1000 trials per temperature)")
+    current = 10
+    next_worse = 15
+    trials = 1000
+    print(f"\nCurrent: {current}, Next: {next_worse}")
+    print(f"{'Temperature':<15} {'Expected %':<15} {'Actual %':<15} {'Accepted'}")
+    temps = [50, 20, 10, 5, 2, 1, 0.5]
+    
+    for temp in temps:
+        prob = acceptance_probability(current, next_worse, temp)
+        expected = prob * 100
+        # Simulate
+        accepted = 0
+        for _ in range(trials):
+            if random.random() < prob:
+                accepted += 1
+        actual = (accepted / trials) * 100
+        print(f"{temp:<15} {expected:<15.2f} {actual:<15.2f} {accepted}")
+    print("\nConclusion:")
+    print("  Theory matches practice!")
+
+def demo4_annealing_process():
+    print("DEMO 4: Complete Annealing Process")
+    current = 50
+    temp = 100
+    cooling_rate = 0.90
+    iterations = 15
+    
+    print(f"\nStarting: cost={current}, temp={temp}")
+    print(f"{'Iter':<6} {'Temp':<10} {'Current':<10} {'Next':<10} {'Prob':<10} {'Action'}")
+
+    for i in range(iterations):
+        # Random neighbor (could be better or worse)
+        next_cost = current + random.randint(-8, 12)
+        prob = acceptance_probability(current, next_cost, temp)
+        # Accept or reject
+        if random.random() < prob:
+            action = "ACCEPT"
+            current = next_cost
+        else:
+            action = "REJECT"
+        print(f"{i:<6} {temp:<10.2f} {current:<10} {next_cost:<10} {prob:<10.4f} {action}")
+        # Cool down
+        temp *= cooling_rate
+    
+    print(f"\nFinal cost: {current}")
+    print("\nConclusion:")
+    print("  Early: High temp, accepts bad moves (explore)")
+    print("  Later: Low temp, rejects bad moves (exploit)")
+
+
+def demo5_delta_comparison():
+    print("DEMO 5: Effect of Cost Difference (Delta)")
+    current = 10
+    temp = 10
+    print(f"\nFixed: current={current}, temp={temp}")
+    print(f"{'Next Cost':<12} {'Delta':<10} {'Probability':<15} {'Percentage'}")
+    next_costs = [10, 11, 12, 15, 20, 25, 30]
+    for next_cost in next_costs:
+        delta = next_cost - current
+        prob = acceptance_probability(current, next_cost, temp)
+        print(f"{next_cost:<12} {delta:<10} {prob:<15.4f} {prob*100:.2f}%")
+    
+    print("\nConclusion:")
+    print("  Small delta -> High acceptance")
+    print("  Large delta -> Low acceptance")
+
+
+def main():
+    print("TEMPERATURE EFFECT IN SIMULATED ANNEALING")
+    print("\nFormula: P = e^(-delta/T)")
+    print("  delta = next_cost - current_cost")
+    print("  T = temperature")
+    demo1_basic_temperature_effect()
+    input("\nPress Enter for next demo...")
+    demo2_cooling_schedule()
+    input("\nPress Enter for next demo...")
+    demo3_simulation()
+    input("\nPress Enter for next demo...")
+    demo4_annealing_process()
+    input("\nPress Enter for next demo...")
+    demo5_delta_comparison()
+    print("SUMMARY")
+    print("1. High temperature = Accept bad moves = Exploration")
+    print("2. Low temperature = Reject bad moves = Exploitation")
+    print("3. Cooling rate controls exploration vs exploitation")
+    print("4. Start hot, cool down gradually for best results")
+
+if __name__ == "__main__":
+    main()

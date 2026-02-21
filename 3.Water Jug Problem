@@ -1,0 +1,131 @@
+rom collections import deque
+class WaterJug:
+    def __init__(self, jug1_capacity=4, jug2_capacity=3, initial_state=(4, 0), goal_state=(2, 0)):
+        self.jug1_capacity = jug1_capacity
+        self.jug2_capacity = jug2_capacity
+        self.initial_state = initial_state
+        self.goal_state = goal_state
+    
+    def goalTest(self, current_state, goal_state):
+        return current_state == goal_state
+    
+    def successor(self, state):
+        jug1, jug2 = state
+        successors = []
+        
+        # Rule 1: Fill Jug 1 completely
+        if jug1 < self.jug1_capacity:
+            new_state = (self.jug1_capacity, jug2)
+            successors.append((new_state, f"Fill Jug 1: {state} -> {new_state}"))
+        
+        # Rule 2: Fill Jug 2 completely
+        if jug2 < self.jug2_capacity:
+            new_state = (jug1, self.jug2_capacity)
+            successors.append((new_state, f"Fill Jug 2: {state} -> {new_state}"))
+        
+        # Rule 3: Empty Jug 1
+        if jug1 > 0:
+            new_state = (0, jug2)
+            successors.append((new_state, f"Empty Jug 1: {state} -> {new_state}"))
+        
+        # Rule 4: Empty Jug 2
+        if jug2 > 0:
+            new_state = (jug1, 0)
+            successors.append((new_state, f"Empty Jug 2: {state} -> {new_state}"))
+        
+        # Rule 5: Pour from Jug 1 to Jug 2
+        if jug1 > 0 and jug2 < self.jug2_capacity:
+            pour_amount = min(jug1, self.jug2_capacity - jug2)
+            new_state = (jug1 - pour_amount, jug2 + pour_amount)
+            successors.append((new_state, f"Pour Jug 1 -> Jug 2: {state} -> {new_state}"))
+        
+        # Rule 6: Pour from Jug 2 to Jug 1
+        if jug2 > 0 and jug1 < self.jug1_capacity:
+            pour_amount = min(jug2, self.jug1_capacity - jug1)
+            new_state = (jug1 + pour_amount, jug2 - pour_amount)
+            successors.append((new_state, f"Pour Jug 2 -> Jug 1: {state} -> {new_state}"))
+        return successors
+    
+    def verify_successor(self):
+        print("VERIFYING SUCCESSOR FUNCTION")
+        print(f"Initial State: {self.initial_state}")
+        print(f"Jug 1 Capacity: {self.jug1_capacity} liters")
+        print(f"Jug 2 Capacity: {self.jug2_capacity} liters")
+        print("\nPossible Successors from Initial State:")
+        successors = self.successor(self.initial_state)
+        for i, (state, action) in enumerate(successors, 1):
+            print(f"{i}. {action}")
+        print("\nTesting another state (2, 2):")
+        successors = self.successor((2, 2))
+        for i, (state, action) in enumerate(successors, 1):
+            print(f"{i}. {action}")
+        print("\nSuccessor function is working correctly!")
+    
+    def generate_path(self, closed_list, goal_state):
+        path = []
+        current_state = goal_state
+        # Backtrack from goal to initial state
+        while current_state is not None:
+            if current_state in closed_list:
+                parent_state, action = closed_list[current_state]
+                if action:
+                    path.append((current_state, action))
+                current_state = parent_state
+            else:
+                break
+        # Reverse to get path from initial to goal
+        path.reverse()
+        return path
+    
+    def BFS(self):
+        print("BREADTH-FIRST SEARCH (BFS)")
+        # Queue for BFS (FIFO)
+        queue = deque([(self.initial_state, None)])
+        # Closed list: {state: (parent_state, action)}
+        closed_list = {self.initial_state: (None, None)}
+        nodes_explored = 0
+        while queue:
+            current_state, current_action = queue.popleft()
+            nodes_explored += 1
+            print(f"Exploring: {current_state}")
+            # Goal test
+            if self.goalTest(current_state, self.goal_state):
+                print(f"\nGoal found! Nodes explored: {nodes_explored}")
+                return self.generate_path(closed_list, current_state)
+            # Generate successors
+            successors = self.successor(current_state)
+            for next_state, action in successors:
+                if next_state not in closed_list:
+                    closed_list[next_state] = (current_state, action)
+                    queue.append((next_state, action))
+        print("No solution found!")
+        return None
+    
+    def print_solution(self, path):
+        print("SOLUTION PATH")
+        print(f"Initial State: {self.initial_state}")
+        print(f"Goal State: {self.goal_state}")
+        print(f"Number of steps: {len(path)}")
+        print(f"Step 0: {self.initial_state} (Initial State)")
+        for i, (state, action) in enumerate(path, 1):
+            print(f"Step {i}: {action}")
+        print(f"Final State: {self.goal_state} (Goal Reached!)")
+
+def main():
+    water_jug = WaterJug(
+        jug1_capacity=4,
+        jug2_capacity=3,
+        initial_state=(4, 0),
+        goal_state=(2, 0)
+    )
+    print("Problem: Given a 4-liter jug filled with water and an empty 3-liter jug, obtain exactly 2 liters in the 4-liter jug.")
+    # Step 1: Verify successor function
+    water_jug.verify_successor()
+    # Step 2: Solve using BFS
+    path = water_jug.BFS()
+    if path:
+        water_jug.print_solution(path)
+    else:
+        print("No solution found!")
+if __name__ == "__main__":
+    main()

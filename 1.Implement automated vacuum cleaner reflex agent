@@ -1,0 +1,70 @@
+import random
+
+class roomCleanerAgent:
+    def __init__(self, room_size=(10, 10)):
+        self.room_size = room_size
+        rows, cols = room_size
+        self.grid = [[random.randint(0, 1) for _ in range(cols)] for _ in range(rows)]
+        self.current_position = (random.randrange(rows), random.randrange(cols))  
+
+    def display_room(self):
+        for row in self.grid:
+            print(' '.join(map(str, row)))
+        print()
+
+    def perceive(self):
+        x, y = self.current_position
+        return self.grid[x][y]
+
+    def act(self):
+        x, y = self.current_position
+        dirty = self.grid[x][y]  # Fixed: removed extra x,y= assignment
+        
+        if dirty == 1:
+            print(f"Cell ({x},{y}) is Dirty. Cleaning")
+            self.grid[x][y] = 0
+            print(f"Cell ({x},{y}) is now Clean")
+        else:
+            print(f"Cell ({x},{y}) is already Clean")
+
+    def move(self):
+        x, y = self.current_position
+        rows, cols = self.room_size
+        
+        moves = []
+        if x > 0: moves.append((x-1, y))  # Up
+        if x < rows-1: moves.append((x+1, y))  # Down
+        if y > 0: moves.append((x, y-1))  # Left
+        if y < cols-1: moves.append((x, y+1))  # Right
+        
+        self.current_position = random.choice(moves)
+        print(f"Moving to ({self.current_position[0]}, {self.current_position[1]})")
+
+    def run(self, steps=50):
+        print("Initial Room Status:")
+        self.display_room()
+        print(f"Starting at position: {self.current_position}\n")
+        
+        for step in range(1, steps + 1):
+            print(f"--- Step {step} ---")
+            status = self.perceive()
+            
+            if status == 1:
+                self.act()  # Clean if dirty
+            else:
+                print(f"Cell ({self.current_position[0]},{self.current_position[1]}) is Clean")
+                self.move()  # Move if clean
+            
+            if all(self.grid[i][j] == 0 for i in range(self.room_size[0]) for j in range(self.room_size[1])):
+                print("\nAll cells are clean!")
+                self.display_room()
+                break
+            
+            if step % 10 == 0:
+                print("\nCurrent Room Status:")
+                self.display_room()
+        print("\nFinal Room Status:")
+        self.display_room()
+
+agent = roomCleanerAgent()
+agent.run()

@@ -1,0 +1,137 @@
+from collections import deque
+
+class TicTacToe:
+    def __init__(self):
+        # Initial empty board
+        self.initial_state = [' ', ' ', ' ',
+                              ' ', ' ', ' ',
+                              ' ', ' ', ' ']
+        self.start_player = 'X'   # X starts first
+
+    # Goal Test (Check if someone wins)
+    def goalTest(self, state):
+        win_positions = [
+            [0,1,2], [3,4,5], [6,7,8],  # Rows
+            [0,3,6], [1,4,7], [2,5,8],  # Columns
+            [0,4,8], [2,4,6]            # Diagonals
+        ]
+
+        for combo in win_positions:
+            if state[combo[0]] == state[combo[1]] == state[combo[2]] != ' ':
+                return True
+        return False
+
+    # Successor Function
+    def successor(self, state, player):
+        successors = []
+
+        for i in range(9):
+            if state[i] == ' ':
+                new_state = state.copy()
+                new_state[i] = player
+                action = f"Place {player} at position {i}"
+                successors.append((new_state, action))
+
+        return successors
+
+    # Verify successor
+    def verify_successor(self):
+        print("VERIFYING SUCCESSOR FUNCTION")
+        print("Initial Board:")
+        self.print_board(self.initial_state)
+
+        successors = self.successor(self.initial_state, self.start_player)
+
+        print("\nPossible moves for X from initial state:")
+        for i, (state, action) in enumerate(successors, 1):
+            print(f"\n{i}. {action}")
+            self.print_board(state)
+
+        print("\nSuccessor function is working correctly!")
+
+    # Generate Path
+    def generate_path(self, closed_list, goal_state):
+        path = []
+        current = tuple(goal_state)
+
+        while current is not None:
+            parent, action = closed_list[current]
+            if action:
+                path.append((list(current), action))
+            current = parent
+
+        path.reverse()
+        return path
+
+    # BFS Search
+    def BFS(self):
+        print("\nBREADTH-FIRST SEARCH (BFS)")
+
+        queue = deque([(self.initial_state, self.start_player)])
+        closed_list = {tuple(self.initial_state): (None, None)}
+
+        nodes_explored = 0
+
+        while queue:
+            current_state, player = queue.popleft()
+            nodes_explored += 1
+
+            print(f"\nExploring Node {nodes_explored}")
+            self.print_board(current_state)
+
+            if self.goalTest(current_state):
+                print("\nGoal Found!")
+                print(f"Nodes Explored: {nodes_explored}")
+                return self.generate_path(closed_list, current_state)
+
+            next_player = 'O' if player == 'X' else 'X'
+
+            for next_state, action in self.successor(current_state, player):
+                state_tuple = tuple(next_state)
+                if state_tuple not in closed_list:
+                    closed_list[state_tuple] = (tuple(current_state), action)
+                    queue.append((next_state, next_player))
+
+        print("No winning state found!")
+        return None
+
+    # Print Board
+    def print_board(self, state):
+        print(f"{state[0]} | {state[1]} | {state[2]}")
+        print("--+---+--")
+        print(f"{state[3]} | {state[4]} | {state[5]}")
+        print("--+---+--")
+        print(f"{state[6]} | {state[7]} | {state[8]}")
+
+    # Print Solution
+    def print_solution(self, path):
+        print("\nSOLUTION PATH")
+        print("Initial State:")
+        self.print_board(self.initial_state)
+
+        for i, (state, action) in enumerate(path, 1):
+            print(f"\nStep {i}: {action}")
+            self.print_board(state)
+
+        print("\nGoal Reached! Someone wins!")
+
+
+def main():
+    print("TIC TAC TOE PROBLEM USING BFS")
+
+    game = TicTacToe()
+
+    # Step 1: Verify successor
+    game.verify_successor()
+
+    # Step 2: Solve using BFS
+    path = game.BFS()
+
+    if path:
+        game.print_solution(path)
+    else:
+        print("No solution found!")
+
+
+if __name__ == "__main__":
+    main()

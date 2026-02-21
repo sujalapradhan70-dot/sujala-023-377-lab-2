@@ -1,0 +1,62 @@
+class TicTacToeHeuristic:
+
+    def __init__(self, board, player='X'):
+        self.board = board
+        self.player = player
+        self.opponent = 'O' if player == 'X' else 'X'
+
+        # 8 winning lines
+        self.lines = [
+            # Rows
+            [(0,0), (0,1), (0,2)],
+            [(1,0), (1,1), (1,2)],
+            [(2,0), (2,1), (2,2)],
+
+            # Columns
+            [(0,0), (1,0), (2,0)],
+            [(0,1), (1,1), (2,1)],
+            [(0,2), (1,2), (2,2)],
+
+            # Diagonals
+            [(0,0), (1,1), (2,2)],
+            [(0,2), (1,1), (2,0)]
+        ]
+
+    def display_board(self):
+        print("\nTIC TAC TOE BOARD")
+        for row in self.board:
+            print(" | ".join(row))
+
+    def is_open_for(self, line, symbol):
+        for r, c in line:
+            if self.board[r][c] not in (' ', symbol):
+                return False
+        return True
+
+    def calculate_heuristic(self):
+        player_open = 0
+        opponent_open = 0
+
+        for line in self.lines:
+            if self.is_open_for(line, self.player):
+                player_open += 1
+            if self.is_open_for(line, self.opponent):
+                opponent_open += 1
+        heuristic = player_open - opponent_open
+        print("\nHEURISTIC CALCULATION")
+        print("Player:", self.player)
+        print("Opponent:", self.opponent)
+        print("Open lines for player:", player_open)
+        print("Open lines for opponent:", opponent_open)
+        print("Heuristic value e(p):", heuristic)
+        return heuristic
+if __name__ == "__main__":
+
+    board = [
+        ['X', 'O', 'X'],
+        [' ', 'O', ' '],
+        [' ', ' ', 'X']
+    ]
+    game = TicTacToeHeuristic(board, player='X')
+    game.display_board()
+    game.calculate_heuristic()
